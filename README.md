@@ -7,16 +7,6 @@ Local data gateway for AI tools. It runs on your computer, opens a browser UI, a
 **Supported packages:** Windows x64 · macOS Apple silicon · macOS Intel  
 **Not available:** Windows ARM64 native builds
 
-## Full user guides
-
-Step-by-step Windows and Mac manuals (install, local IDE, license, redaction checks):
-
-- Handbook home: [docs/](docs/index.md) (also on GitHub Pages when enabled)
-- [Windows guide](docs/windows/index.md)
-- [Mac guide](docs/mac/index.md)
-
-The short prompt below only covers AI-assisted install up to the license page.
-
 ## Install with an AI assistant
 
 1. Open Cursor, Claude Code, WorkBuddy, or another assistant that can run commands on **this computer**.

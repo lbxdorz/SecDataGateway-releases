@@ -7,16 +7,6 @@
 **支援的安裝包：** Windows x64 · macOS Apple 晶片 · macOS Intel  
 **暫不提供：** Windows ARM64 原生包
 
-## 完整操作手冊
-
-Windows／Mac 圖文說明（安裝、接入本機 IDE、授權、脫敏驗收）：
-
-- 手冊首頁：[docs/](docs/index.md)（啟用 GitHub Pages 後亦可線上瀏覽）
-- [Windows 操作手冊](docs/windows/index.md)
-- [Mac 操作手冊](docs/mac/index.md)
-
-下方短提示詞僅涵蓋「用 AI 安裝到授權頁」；完整產品操作請看上手冊。
-
 ## 用 AI 助手安裝
 
 1. 開啟 Cursor、Claude Code、WorkBuddy，或其他能在**這部電腦**執行指令的助手。
