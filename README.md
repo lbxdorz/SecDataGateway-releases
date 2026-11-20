@@ -3,19 +3,27 @@
 [English](README.md) | [繁體中文](README.zh-Hant.md)
 
 ```text
-Read the following instructions and help me install, configure, and verify SecDataGateway on this computer. Ask me when you need me to sign in, provide a license, or confirm a permission:
+Read the following instructions and install the latest SecDataGateway for this computer, then open the license/activation page and stop. Ask me only for OS permission prompts. Do not upload or request my .lic file:
 https://raw.githubusercontent.com/lbxdorz/SecDataGateway-releases/main/README.md
 ```
 
-Use an AI assistant that can run local shell/file commands. Browser or desktop control helps when the OS or a provider asks you to confirm something. A web chat without local access can only guide you.
+**For people:** This page is for a local AI assistant. It installs SecDataGateway, checks that the service is ready, opens the license page, and asks you to upload the `.lic` file from your vendor yourself. It does not finish product setup after licensing.
 
-SecDataGateway is a local AI gateway with document redaction. This guide verifies the **target IDE → gateway → provider** path. Steps the assistant can finish with verified commands or the product’s own local HTTP calls are below; passwords, license files, SSO, and OS security prompts stay with you; anything whose contract does not match this running build is **not** finished automation—say so and stop.
+**Success means:** latest stable build for this OS/CPU is running, the license page is open, and the assistant told you to upload the vendor `.lic` yourself. Unlicensed software is **not** fully usable yet. After you activate, use the in-app help / product manuals for IDE connection and other features.
 
-## 1. Machine, latest tag, and any service already running
+Use an assistant with local shell access. A web chat without local control can only guide you.
 
-Default listen address for local installs is `http://127.0.0.1:18787`. Install into a user folder (macOS `~/Applications/SecDataGateway`, Windows `%LOCALAPPDATA%\SecDataGateway`, override with `SDG_INSTALL_ROOT`). No `sudo` / Administrator shell. Do not kill an existing SecDataGateway. Do not overwrite unrelated IDE/MCP settings.
+---
 
-**Always resolve the latest stable release once**, then keep that tag for every later download and checksum:
+## Instructions for the AI assistant
+
+Do these steps in order. Prefer commands below. Do **not** read, request, copy, or upload any `.lic`. Do **not** activate licensing for the user. Do **not** configure IDEs or run redaction tests in this flow. On errors (missing asset, bad checksum, start failure, health failure), **stop** and report—do not invent mirrors or disable OS security. No `sudo`.
+
+Default local UI base: `http://127.0.0.1:18787`.  
+Verified license page deep link (SPA hash route `license` in the product UI):  
+`http://127.0.0.1:18787/#license`
+
+### 1) Lock the latest stable release once
 
 ```bash
 SDG_REPO='https://github.com/lbxdorz/SecDataGateway-releases'
@@ -25,11 +33,20 @@ case "$SDG_TAG" in v[0-9]*) ;; *) echo 'Unexpected release tag'; exit 1;; esac
 echo "Locked tag: $SDG_TAG"
 ```
 
-GitHub `/releases/latest` excludes drafts and prereleases. Prefer selecting the asset from that tag’s real asset list (API or release page), not a guessed URL. If the matching asset is missing, **stop**.
+GitHub `/releases/latest` excludes drafts and prereleases. Keep this tag for every download and for `checksums.txt`. Prefer picking the asset from that tag’s real GitHub assets list; if none matches, **stop**.
 
-**If something already listens on `18787`:**
+| Machine | Asset name must end with |
+| --- | --- |
+| Windows x64 | `windows_amd64.zip` |
+| Apple silicon Mac | `darwin_arm64.tar.gz` |
+| Intel Mac | `darwin_amd64.tar.gz` |
+| Windows ARM64 | No native package — **stop** (do not treat amd64 as native) |
 
-1. Read-only probes (do not POST yet):
+On Mac, detect **native** CPU (`uname -m`, and if needed `sysctl.proc_translated` / `hw.optional.arm64`) so a Rosetta shell still selects `arm64` on Apple silicon.
+
+Install root (overridable with `SDG_INSTALL_ROOT`): macOS `~/Applications/SecDataGateway`, Windows `%LOCALAPPDATA%\SecDataGateway`. Use a **new** `$SDG_INSTALL_ROOT/$SDG_TAG` folder; refuse to overwrite an existing one.
+
+### 2) If something already listens on port 18787
 
 ```bash
 curl --noproxy '*' -fSs 'http://127.0.0.1:18787/api/health'
@@ -37,29 +54,17 @@ curl --noproxy '*' -fSs 'http://127.0.0.1:18787/api/version'
 curl --noproxy '*' -fSs 'http://127.0.0.1:18787/api/startup-status'
 ```
 
-2. Compare `version` to the locked tag (ignore a leading `v`).  
-   - **Same version and health OK:** reuse this service; skip download/start; continue at licensing / IDE. Do not claim a new install.  
-   - **Different version:** report both versions and **stop**. Do not kill the process, do not auto-overwrite the old install, and do **not** claim the latest build is installed.  
-   - **Port busy but health fails:** report the conflict and stop.
+Compare `version` to the locked tag (ignore a leading `v`).
 
-Listener checks: Mac `lsof -nP -iTCP:18787 -sTCP:LISTEN`; PowerShell `Get-NetTCPConnection -State Listen -LocalPort 18787` (PowerShell path not executed on this documentation host).
+- **Same version and healthy:** reuse it; skip download/start; go to step 4. Do not claim a new install.
+- **Different version:** report both versions and **stop**. Do not kill the process, do not auto-overwrite, do not claim the latest build is installed.
+- **Port busy but unhealthy:** report conflict and stop.
 
-**CPU / package selection**
+Listener check: Mac `lsof -nP -iTCP:18787 -sTCP:LISTEN`.
 
-| Machine | Choose an asset whose name contains |
-| --- | --- |
-| Windows x64 | `windows_amd64.zip` |
-| Apple silicon Mac | `darwin_arm64.tar.gz` |
-| Intel Mac | `darwin_amd64.tar.gz` |
-| Windows ARM64 | No native package in current releases — **stop** (do not treat amd64 as native) |
+### 3) Download, verify, extract, start (only when step 2 says to install)
 
-On Mac, detect **native** architecture (`uname -m`, and if needed `sysctl.proc_translated` / `hw.optional.arm64`) so a Rosetta shell still picks `arm64` when the Mac is Apple silicon.
-
-## 2. Download, verify, extract, start (only when section 1 says to install)
-
-After the tag is locked, pick the exact asset name from that release’s assets, download **the same tag’s** `checksums.txt`, verify SHA-256, extract into a **new** `$SDG_INSTALL_ROOT/$SDG_TAG` folder (refuse if the folder already exists), then start.
-
-**macOS (Terminal)**
+**macOS**
 
 ```bash
 bash <<'SH'
@@ -96,87 +101,33 @@ printf 'Tag: %s\nFolder: %s\nAsset: %s\n' "$SDG_TAG" "$SDG_DIR" "$SDG_FILE"
 SH
 ```
 
-If macOS blocks the app, ask the user before running only:  
-`xattr -dr com.apple.quarantine ./SecDataGateway.app`  
-from the folder that contains the app. Do not disable Gatekeeper globally.
+If macOS blocks the app, ask before: `xattr -dr com.apple.quarantine ./SecDataGateway.app` (only that app). Do not disable Gatekeeper.
 
-**Windows (PowerShell)** — syntax documented; not executed on the Mac that authored this file:
+**Windows (PowerShell — not executed on the Mac that authored this doc)**  
+Resolve `/releases/latest` → lock tag → from that tag’s assets pick the sole `*windows_amd64.zip` → download it and same-tag `checksums.txt` → `Get-FileHash -Algorithm SHA256` → `Expand-Archive` into a **new** `%LOCALAPPDATA%\SecDataGateway\<tag>` → `Start-Process` `SecDataGateway.exe`. Missing asset or hash mismatch → stop.
+
+After start, repeat the three GET checks until `startup-status` is ready (or stop with failure).
+
+### 4) Open the license page (required end of this flow)
+
+When health/version/startup look good:
+
+```bash
+# macOS
+open 'http://127.0.0.1:18787/#license'
+```
 
 ```powershell
-$ErrorActionPreference = 'Stop'
-$repo = 'https://github.com/lbxdorz/SecDataGateway-releases'
-$latest = Invoke-WebRequest -UseBasicParsing -Uri "$repo/releases/latest" -MaximumRedirection 0 -ErrorAction SilentlyContinue
-if (-not $latest -and $_.Exception.Response) { $latest = $_.Exception.Response }
-# Prefer: resolve Location from /releases/latest, lock $tag, then
-# GET https://api.github.com/repos/lbxdorz/SecDataGateway-releases/releases/tags/<tag>
-# and pick the single asset whose name ends with windows_amd64.zip.
-# Download that asset + checksums.txt from the same tag, verify with Get-FileHash -Algorithm SHA256,
-# Expand-Archive into $env:LOCALAPPDATA\SecDataGateway\<tag> (must be new), then
-# Start-Process the extracted SecDataGateway.exe with WorkingDirectory set to that folder.
-# If the asset is missing or the hash mismatches, stop. Do not use an amd64 zip on Windows ARM64 as "native".
+# Windows
+Start-Process 'http://127.0.0.1:18787/#license'
 ```
 
-After start, repeat the three GET checks in section 1 until `startup-status` shows ready (or report failure).
+Evidence for this URL: the product UI registers page id `license` as a hash route, and when license status is not active the app navigates to that page. Local default listen address is `127.0.0.1:18787`. Opening `#license` lands on the offline activation / license file UI (export device request + choose `.lic` in the browser). Do not automate file pick or upload.
 
-## 3. License
+Then reply to the user **exactly in this sense** (Traditional Chinese OK if they use that language):
 
-Read-only:
+> 已完成安裝並開啟授權頁面，請自行上傳供應商提供的 .lic 授權檔案。
 
-```bash
-curl --noproxy '*' -fSs 'http://127.0.0.1:18787/api/license'
-curl --noproxy '*' -fSs -D - 'http://127.0.0.1:18787/api/license/request' -o SecDataGateway-device-request.json
-```
+English equivalent: *Installation is done and the license page is open. Please upload the vendor-provided .lic file yourself.*
 
-Keep the device-request file private; send it only through the vendor’s licensing channel. When the user gives a **device-bound** `.lic` path, import with the product’s multipart field name `license` (do not invent JSON `activation_code`):
-
-```bash
-curl --noproxy '*' -fSs -H 'Origin: http://127.0.0.1:18787' \
-  -F "license=@/absolute/path/to/user.lic" \
-  'http://127.0.0.1:18787/api/license'
-```
-
-Getting the `.lic` is always a human step. Do not paste license or device contents into chat. If this POST returns an unexpected status/body versus a working UI import on the **same running build**, stop and report **product interface pending confirmation; automation not complete**—then use the in-app offline activation page.
-
-## 4. IDE scan, models, connect (local product HTTP — not a public stable CLI)
-
-These paths are what the official UI already calls under `/magpie/api/…` on local deployments. They are **not** a documented public CLI. Before any changing call: backup IDE/MCP config you might touch; `GET /api/version`; `GET /magpie/api/agents/page`. If routes 404 or JSON shape differs from below, **stop** with **product interface pending confirmation; automation not complete** and finish those steps in the UI.
-
-```bash
-# List / refresh detected IDEs (rescan is POST with empty body)
-curl --noproxy '*' -fSs 'http://127.0.0.1:18787/magpie/api/agents/page'
-curl --noproxy '*' -fSs -X POST 'http://127.0.0.1:18787/magpie/api/agents/page/rescan'
-
-# Connect only an id returned above (empty body)
-curl --noproxy '*' -fSs -X POST "http://127.0.0.1:18787/magpie/api/agents/page/connect/<id-from-page>"
-```
-
-Provider login / SSO / API keys: open the **official** sign-in flow the product starts (`/magpie/api/signin` and related UI). Never scrape cookies or tokens.
-
-When the user is already authorized and `GET /magpie/api/providers` returns the catalog, you may save **only ids/options from that response** (do not invent model names):
-
-```bash
-curl --noproxy '*' -fSs -H 'Content-Type: application/json' \
-  -d '{"id":"<provider-id>","models":["<model-id-from-catalog>"],"noModels":false,"bestInFamily":false,"unlisted":false,"hiddenDrawers":[]}' \
-  'http://127.0.0.1:18787/magpie/api/provider/save'
-```
-
-Then select the gateway-exposed model inside the IDE. Prefer not changing an already-good selection. Disconnect only if the user asks.
-
-## 5. Acceptance (fake data through the target IDE)
-
-1. `GET /api/rules` and `GET /api/rule-groups` — note **enabled** rules.  
-2. Choose a **synthetic** string those rules should match (for example a made-up email). Do **not** send text that is already a placeholder such as `PERSON_001`. Do not use real customer data.  
-3. Send that string from the **target IDE** using the gateway model (no substitute document-upload path).  
-4. Inspect records:
-
-```bash
-curl --noproxy '*' -fSs 'http://127.0.0.1:18787/magpie/api/masking/records?limit=40'
-curl --noproxy '*' -fSs --get --data-urlencode 'key=<key-from-records>' \
-  'http://127.0.0.1:18787/magpie/api/masking/record'
-```
-
-**PASS** only if that record’s outbound / vendor-visible detail (for example `sent`) shows the synthetic value replaced and absent as raw text, and the request was not merely blocked. List counts alone are not enough. If detail fields are missing, report **「連線已驗證，脫敏效果未完整驗證」** / “Connection verified; redaction effect not fully verified” and **do not** claim overall PASS.
-
-## 6. Scope reminder
-
-This document does **not** promise a fully GUI-free install. Automated pieces above depend on local commands plus matching front-end HTTP on **this** running build. Human steps remain for license issuance, credentials/SSO, and OS prompts. Unverified or mismatched interfaces must be reported as incomplete automation—not as success.
+Do not say the product is fully ready before they activate.
