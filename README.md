@@ -1,6 +1,6 @@
 # SecDataGateway
 
-[English](README.md) | [繁體中文](README.zh-Hant.md)
+[English](README.md) | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-Hant.md)
 
 Local data gateway for AI tools. It runs on your computer, opens a browser UI, and asks for a license file before full use.
 

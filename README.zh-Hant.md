@@ -1,6 +1,6 @@
 # SecDataGateway
 
-[English](README.md) | [繁體中文](README.zh-Hant.md)
+[English](README.md) | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-Hant.md)
 
 本機 AI 資料閘道。安裝後會在電腦上運行，並開啟瀏覽器介面；完整使用前需要匯入授權檔。
 
